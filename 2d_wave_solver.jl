@@ -100,6 +100,7 @@ function wave_solver_2d_pml(c,Nx,Ny,h,Nt,dt,pml_len,pml_alpha,source_coor,source
     source = zeros(Nx+2*pml_len,Ny+2*pml_len,Nt);
     # change source coordinate
     source_coor_ex = source_coor + pml_len*ones(Int,size(source_coor,1),size(source_coor,2));
+    # here we changed the maximum value of source by (1/dx)^2 just for convenience
     for i = 1:size(source_coor, 1)
         source[source_coor_ex[i,1], source_coor_ex[i,2], :] = (1/dt)^2*source_func[i,:];
     end
