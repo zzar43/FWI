@@ -1,14 +1,14 @@
 # This file is for test forward modelling
 
-using PyPlot
+# using PyPlot
 include("model_parameter.jl");
 include("2d_wave_solver.jl");
 
 # plot model
-imshow(vel_true'); colorbar()
-scatter(source_coor[:,1], source_coor[:,2])
-scatter(receiver_coor[:,1], receiver_coor[:,2])
-savefig("model.pdf", format="pdf")
+# imshow(vel_true'); colorbar()
+# scatter(source_coor[:,1], source_coor[:,2])
+# scatter(receiver_coor[:,1], receiver_coor[:,2])
+# savefig("model.pdf", format="pdf")
 
 # Make data
 r_u = zeros(receiver_num,Nt,source_num);
@@ -48,10 +48,10 @@ for iter_main = 1:iter_time
         print("\nSource ", ind_source, " done.")
     end
 
-    matshow(dJ0', clim=[-1,1], cmap="gray"); colorbar()
-    scatter(source_coor[:,1], source_coor[:,2])
-    scatter(receiver_coor[:,1], receiver_coor[:,2])
-    savefig("dJ.png", format="png")
+    # matshow(dJ0', clim=[-1,1], cmap="gray"); colorbar()
+    # scatter(source_coor[:,1], source_coor[:,2])
+    # scatter(receiver_coor[:,1], receiver_coor[:,2])
+    # savefig("dJ.png", format="png")
 
 
     # Choose a step size
@@ -67,14 +67,18 @@ for iter_main = 1:iter_time
     print("\nval_alpha: ", val_alpha)
     vel_init = vel_init+alpha[indmin(val_alpha)]*dJ0;
     # vel_init = vel_init - 10*dJ0;
-    matshow(vel_init', cmap="gray"); colorbar()
-    scatter(source_coor[:,1], source_coor[:,2])
-    scatter(receiver_coor[:,1], receiver_coor[:,2])
-    savefig("vel_init.png", format="png")
+    # matshow(vel_init', cmap="gray"); colorbar()
+    # scatter(source_coor[:,1], source_coor[:,2])
+    # scatter(receiver_coor[:,1], receiver_coor[:,2])
+    # savefig("vel_init.png", format="png")
     
     print("\nMain iter: ", iter_main);
 end
 
+print("All Done!")
+using NPZ
+npzwrite("vel.npy", vel_init)
+npzwrite("dJ.npy", dJ0)
 
 
 
