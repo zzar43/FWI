@@ -47,6 +47,8 @@ function wave_solver_2d_pml(c,Nx,Ny,h,Nt,dt,pml_len,pml_alpha,source_coor,source
 
     # pml coef with linear relation
     pml_value = linspace(0,pml_alpha,pml_len);
+    # pml_value = 1./(pml_alpha-pml_value+1) * 100;
+    # pml_value = pml_value.^2;
 
     sigma_x = zeros(Nx+2*pml_len,Ny+2*pml_len);
     for i = 1:pml_len
@@ -95,7 +97,6 @@ function wave_solver_2d_pml(c,Nx,Ny,h,Nt,dt,pml_len,pml_alpha,source_coor,source
     A = ones(Nx+2*pml_len,Ny+2*pml_len) ./ c_ex.^2;
     B = (sigma_x + sigma_y) ./ c_ex.^2;
     C = ones(Nx+2*pml_len,Ny+2*pml_len) ./ c_ex.^2;
-    heatmap(B)
 
     source = zeros(Nx+2*pml_len,Ny+2*pml_len,Nt);
     # change source coordinate
@@ -139,5 +140,10 @@ function wave_solver_2d_pml(c,Nx,Ny,h,Nt,dt,pml_len,pml_alpha,source_coor,source
         received_data[i,:] = snaps_u[receiver_coor[i,1],receiver_coor[i,2],:];
     end
 
-    return u2, snaps_u, received_data;
+    # ====================
+    # Output
+    # ====================
+    # return u2, snaps_u, received_data;
+    return snaps_u, received_data;
+
 end
