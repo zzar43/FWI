@@ -82,7 +82,7 @@ for iter_main = 1:iter_time
     vel_init = vel_init+alpha[indmin(val_alpha)]*dJ;
 end
 println("==============================")
-npzwrite("data.npy", vel_init)
+npzwrite("vel.npy", vel_init)
 println("data saved.")
 println("All Done!")
 
