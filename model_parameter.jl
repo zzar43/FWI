@@ -31,16 +31,16 @@ function source_sine(center_fre, t)
     return x;
 end
 
-source_num = 10;
+source_num = 5;
 source_coor = zeros(Int,source_num,2);
-for i = 1:5
+for i = 1:source_num
     source_coor[i,1] = 16*i;
     source_coor[i,2] = 1;
 end
-for i = 6:10
-    source_coor[i,1] = 16*(i-5);
-    source_coor[i,2] = 100;
-end
+# for i = 6:10
+#     source_coor[i,1] = 16*(i-5);
+#     source_coor[i,2] = 100;
+# end
 
 source_vec0 = 100*source_ricker(20, 0.05, t);
 # source_vec0 = 100*source_sine(50, t);
