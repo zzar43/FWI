@@ -31,11 +31,15 @@ function source_sine(center_fre, t)
     return x;
 end
 
-source_num = 4;
+source_num = 10;
 source_coor = zeros(Int,source_num,2);
-for i = 1:source_num
-    source_coor[i,1] = 10 + 20*i;
-    source_coor[i,2] = 5;
+for i = 1:5
+    source_coor[i,1] = 16*i;
+    source_coor[i,2] = 1;
+end
+for i = 6:10
+    source_coor[i,1] = 16*(i-5);
+    source_coor[i,2] = 100;
 end
 
 source_vec0 = 100*source_ricker(20, 0.05, t);
@@ -50,7 +54,7 @@ receiver_num = Nx;
 receiver_coor = zeros(Int,receiver_num,2);
 for i = 1:receiver_num
     receiver_coor[i,1] = i;
-    receiver_coor[i,2] = 2;
+    receiver_coor[i,2] = 1;
 end
 
 # PML
