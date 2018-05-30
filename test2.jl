@@ -61,16 +61,16 @@ for iter_main = 1:iter_time
     dJ = dJ ./ maximum(abs.(dJ));
     dJ = dJ[:,:,1];
     npzwrite("dJ.npy", dJ)
-    pritnln("dJ saved.")
+    println("dJ saved.")
 
     # Choose a step size
     alpha = linspace(1,10,5);
     alpha = alpha.^2;
-    val_alpha = zeros(length(alpha));
-    r_u_alpha = zeros(receiver_num,Nt,source_num);
-    for i = 1:length(alpha)
+    val_alpha = SharedArray{Float64}(length(alpha));
+    r_u_alpha = SharedArray{Float64}(receiver_num,Nt,source_num);
+    @sync @parallel for i = 1:length(alpha)
         wavefield, r_u_alpha[:,:,1] = wave_solver_2d_pml(vel_init+alpha[i]*dJ,Nx,Nz,dx,Nt,dt,pml_len,pml_alpha,source_coor[1,:]',source_vec[1,:]',receiver_coor);
-        val_alpha[i] = norm(r_u[:,:,1] - r_u_alpha[:,:,1]);
+        val_alpha[i] = norm(r_u[:,:,i] - r_u_alpha[:,:,i]);
     end
     println("val_alpha: ", val_alpha, "\n")
     vel_init = vel_init+alpha[indmin(val_alpha)]*dJ;
