@@ -56,6 +56,7 @@ for iter_main = 1:iter_time
         dJ_temp = sum(dJ_temp,3);
         dJ_temp = dJ_temp[:,:,1];
         dJ_temp = -2 ./ (vel_init).^3 .* dJ_temp;
+        dJ_temp = dJ_temp ./ maximum(abs.(dJ_temp));
         
         dJ[:,:,source_num] = dJ_temp;
 
