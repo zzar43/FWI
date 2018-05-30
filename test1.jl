@@ -1,6 +1,7 @@
 # This file is for test forward modelling
 
-# using PyPlot
+using PyPlot
+# using NPZ
 include("model_parameter.jl");
 include("2d_wave_solver.jl");
 
@@ -18,7 +19,7 @@ for i = 1:source_num
 end
 
 # Main Loop
-iter_time = 3
+iter_time = 1
 for iter_main = 1:iter_time
 
         dJ0 = zeros(Nx,Nz);
@@ -56,7 +57,7 @@ for iter_main = 1:iter_time
 
     # Choose a step size
     # alpha = [10,20,30,40,50];
-    alpha = linspace(1,50,5);
+    alpha = linspace(1,50,2);
     val_alpha = zeros(length(alpha));
     r_u_alpha = zeros(receiver_num,Nt,source_num);
     for i = 1:length(alpha)
@@ -65,6 +66,7 @@ for iter_main = 1:iter_time
         print("\n", i)
     end
     print("\nval_alpha: ", val_alpha)
+    npzwrite("dJ.npy", dJ0)
     vel_init = vel_init+alpha[indmin(val_alpha)]*dJ0;
     # vel_init = vel_init - 10*dJ0;
     # matshow(vel_init', cmap="gray"); colorbar()
@@ -76,9 +78,9 @@ for iter_main = 1:iter_time
 end
 
 print("All Done!")
-using NPZ
-npzwrite("vel.npy", vel_init)
-npzwrite("dJ.npy", dJ0)
+
+# npzwrite("vel.npy", vel_init)
+
 
 
 
