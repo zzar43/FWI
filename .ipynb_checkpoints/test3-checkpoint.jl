@@ -6,13 +6,13 @@ include("2d_wave_solver.jl");
 # scatter(source_coor[:,1], source_coor[:,2])
 # scatter(receiver_coor[:,1], receiver_coor[:,2],alpha=0.1)
 
-# Make data``````
+# Make data
 
-@time u2, snaps_u = wave_solver_2d_dirichlet(vel_true,Nx,Nz,dx,Nt,dt,source_coor,source_vec,receiver_coor);
+@time u2, snaps_u,rr = wave_solver_2d_dirichlet(vel_true,Nx,Nz,dx,Nt,dt,source_coor,source_vec,receiver_coor);
 
 @code_warntype wave_solver_2d_dirichlet(vel_true,Nx,Nz,dx,Nt,dt,source_coor,source_vec,receiver_coor);
 
-@time wavefield1, r1= wave_solver_2d_pml1(vel_true,Nx,Nz,dx,Nt,dt,pml_len,pml_alpha,source_coor,source_vec,receiver_coor)
+@time wavefield1, r1= wave_solver_2d_pml1(vel_true,Nx,Nz,dx,Nt,dt,pml_len,pml_alpha,source_coor,source_vec,receiver_coor);
 
 @time wavefield2, r2 = wave_solver_2d_pml(vel_true,Nx,Nz,dx,Nt,dt,pml_len,pml_alpha,source_coor,source_vec,receiver_coor);
 
@@ -36,5 +36,3 @@ matshow(wavefield2[:,:,t])
      end
      u_sum
  end
-
-
