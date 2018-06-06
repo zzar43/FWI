@@ -8,9 +8,9 @@ Nx, Ny = 101, 101; # grid number
 # True velocity model
 vel_true = 2000*ones(Nx,Ny);
 for i = 1:Nx
-    vel_true[i,:] = linspace(1800,2200,Ny);
+    vel_true[i,:] = linspace(1900,2200,Ny);
 end
-vel_true[:,40:45] = 1850;
+vel_true[:,40:45] = 1950;
 vel_true[:,70:end] = 2200;
 # vel_true = 2000 * vel_true;
 # vel_true[:,30:60] = 2200;
@@ -40,11 +40,15 @@ function source_sine(center_fre, t)
     x = sin.(2*pi*center_fre.*t);
     return x;
 end
-source_num = 6;
+source_num = 12;
 source_coor = zeros(Int,source_num,2);
-for i = 1:source_num
+for i = 1:6
     source_coor[i,1] = 20*(i-1)+1;
     source_coor[i,2] = 5;
+end
+for i = 7:source_num
+    source_coor[i,1] = 20*(i-7)+1;
+    source_coor[i,2] = 96;
 end
 source_vec0 = 100*source_ricker(25, 0.05, t);
 # source_vec0 = 100*source_sine(40, t);
