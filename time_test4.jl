@@ -17,7 +17,8 @@ for iter_main = 1:iter_time
     println("Main iter time: ", iter_main)
     @time S, received_data_forward = source_loop(vel_init, Nx, Ny, h, Nt, dt, pml_len, pml_alpha, source_coor, source_vec, receiver_coor, received_data);
 
-    @time alpha = line_search(vel_init, S, 100, vel_true,received_data_forward, received_data, Nx,Ny,h,Nt,dt,pml_len,pml_alpha,source_coor,source_vec,receiver_coor)
+    alpha0 = [100; 50; 20];
+    @time alpha = line_search(vel_init, S, alpha0[iter_main], vel_true,received_data_forward, received_data, Nx,Ny,h,Nt,dt,pml_len,pml_alpha,source_coor,source_vec,receiver_coor)
 
     if alpha == 0
         break;
