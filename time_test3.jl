@@ -18,6 +18,10 @@ for iter_main = 1:iter_time
 
     alpha = line_search(vel_init, S, 100, vel_true,received_data_forward, received_data, Nx,Ny,h,Nt,dt,pml_len,pml_alpha,source_coor,source_vec,receiver_coor)
 
+    if alpha == 0
+        break;
+    end
+
     vel_init = vel_init - alpha * S;
     # draw_real(vel_init)
     # draw_real(S)

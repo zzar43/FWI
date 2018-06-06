@@ -1,3 +1,4 @@
+# Parallel version.
 # This file is for the steepest gradient method and line search algorithm.
 
 using NPZ;
