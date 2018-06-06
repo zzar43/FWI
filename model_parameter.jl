@@ -1,21 +1,21 @@
 # Setup the model parameters.
-include("draw_graph.jl");
+# include("draw_graph.jl");
 
 # Grid dimension
 h = 5; # step size in meter
-Nx, Nz = 101, 101; # grid number
+Nx, Ny = 101, 101; # grid number
 
 # True velocity model
-vel_true = 2000*ones(Nx,Nz);
+vel_true = 2000*ones(Nx,Ny);
 # vel_true = 2000 * vel_true;
 # vel_true[:,30:60] = 2200;
 vel_true[:,71:end] = 2200;
 # vel_true[95:105,100:105] = 2200;
-# using ImageFiltering
-# vel_init = imfilter(vel_true, Kernel.gaussian(10));
+using ImageFiltering
+vel_init = imfilter(vel_true, Kernel.gaussian(8));
 
 # Initial velocity model
-vel_init = 2000*ones(Nx,Nz);
+# vel_init = 2000*ones(Nx,Ny);
 
 # Time
 sample_fre = 1000; # Hertz
@@ -32,11 +32,11 @@ function source_sine(center_fre, t)
     x = sin.(2*pi*center_fre.*t);
     return x;
 end
-source_num = 1;
+source_num = 6;
 source_coor = zeros(Int,source_num,2);
 for i = 1:source_num
-    source_coor[i,1] = 20;
-    source_coor[i,2] = 20;
+    source_coor[i,1] = 20*(i-1)+40;
+    source_coor[i,2] = 5;
 end
 source_vec0 = 100*source_ricker(25, 0.05, t);
 # source_vec0 = 100*source_sine(40, t);
@@ -46,11 +46,11 @@ for i = 1:source_num
 end
 
 # Receiver
-receiver_num = 1;
+receiver_num = Nx;
 receiver_coor = zeros(Int,receiver_num,2);
 for i = 1:receiver_num
-    receiver_coor[i,1] = 80;
-    receiver_coor[i,2] = 20;
+    receiver_coor[i,1] = i;
+    receiver_coor[i,2] = 1;
 end
 
 # PML
@@ -58,5 +58,6 @@ pml_len = 20;
 pml_alpha = 300;
 
 # Display model
-# draw_model(vel_true,receiver_coor,source_coor)
-# draw_model(vel_init,receiver_coor,source_coor)
+println("Source number: ", source_num)
+println("Receiver number: ", receiver_num)
+draw_model(vel_true, vel_init, receiver_coor,source_coor);

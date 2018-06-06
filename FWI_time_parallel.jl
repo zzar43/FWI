@@ -4,7 +4,7 @@ function make_data(vel_true,Nx,Ny,h,Nt,dt,pml_len,pml_alpha,source_coor,source_v
     true_wavefield = zeros(Nx,Ny,Nt,source_num);
     received_data = zeros(receiver_num,Nt,source_num);
     # println("Start to build the received data.")
-    for ind_source = 1:source_num
+    @sync @parallel for ind_source = 1:source_num
         true_wavefield[:,:,:,ind_source], received_data[:,:,ind_source] = wave_solver_2d_pml(vel_true,Nx,Ny,h,Nt,dt,pml_len,pml_alpha,source_coor[ind_source,:]',source_vec[ind_source,:]',receiver_coor);
         # println("Source: ", ind_source, " done.")
         # draw_real(true_wavefield[:,:,200,ind_source])
@@ -16,11 +16,11 @@ end
 
 
 function source_loop(vel_init, Nx, Ny, h, Nt, dt, pml_len, pml_alpha, source_coor, source_vec, receiver_coor, received_data)
-    S = zeros(Nx,Ny);
+    S = zeros(Nx,Ny,ind_source);
     # Forward and backward
     println("Source loop started. Computing sensitivity.")
     forward_wavefield, received_data_forward = make_data(vel_init,Nx,Ny,h,Nt,dt,pml_len,pml_alpha,source_coor,source_vec,receiver_coor)
-    for ind_source = 1:source_num
+    @sync @parallel for ind_source = 1:source_num
         # forward_wavefield, received_data_forward = wave_solver_2d_pml(vel_init,Nx,Ny,h,Nt,dt,pml_len,pml_alpha,source_coor[ind_source,:]',source_vec[ind_source,:]',receiver_coor);
         # draw_real(forward_wavefield[:,:,300])
         # draw_real(received_data_forward)
@@ -43,9 +43,11 @@ function source_loop(vel_init, Nx, Ny, h, Nt, dt, pml_len, pml_alpha, source_coo
         S0 = S0[:,:,1];
         S0 = -2 ./ (vel_init).^3 .* S0;
         S0 = S0 ./ maximum(abs.(S0));
-        S = S + S0;
+        S[:,:,ind_source] = S0;
         println("   Source: ", ind_source, " done.")
     end
+    S = sum(S,3);
+    S = S[:,:,1];
     S = S./maximum(S);
     println("Finish source loop.")
     return S, received_data_forward;
@@ -63,7 +65,7 @@ function line_search(c_init, S, alpha, vel_true,received_data_forward, received_
         alpha_vec[i] = alpha_vec[i-1] / 2;
     end
     J[iter_max] = sum((received_data_forward - received_data).^2);
-    for i = 1:iter_max-1
+    @sync @parallel for i = 1:iter_max-1
         alpha = alpha_vec[i]
         wavefield_new, received_data_new = make_data(vel_init-alpha*S,Nx,Ny,h,Nt,dt,pml_len,pml_alpha,source_coor,source_vec,receiver_coor);
         wavefield_new = [];
