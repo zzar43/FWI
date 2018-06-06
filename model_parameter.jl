@@ -3,16 +3,16 @@
 
 # Grid dimension
 h = 5; # step size in meter
-Nx, Ny = 101, 101; # grid number
+Nx, Ny = 101, 51; # grid number
 
 # True velocity model
 vel_true = 2000*ones(Nx,Ny);
 # vel_true = 2000 * vel_true;
 # vel_true[:,30:60] = 2200;
-vel_true[:,71:end] = 2200;
+vel_true[:,41:end] = 2200;
 # vel_true[95:105,100:105] = 2200;
 using ImageFiltering
-vel_init = imfilter(vel_true, Kernel.gaussian(8));
+vel_init = imfilter(vel_true, Kernel.gaussian(10));
 
 # Initial velocity model
 # vel_init = 2000*ones(Nx,Ny);
@@ -35,7 +35,7 @@ end
 source_num = 6;
 source_coor = zeros(Int,source_num,2);
 for i = 1:source_num
-    source_coor[i,1] = 20*(i-1)+40;
+    source_coor[i,1] = 20*(i-1)+1;
     source_coor[i,2] = 5;
 end
 source_vec0 = 100*source_ricker(25, 0.05, t);
@@ -60,4 +60,4 @@ pml_alpha = 300;
 # Display model
 println("Source number: ", source_num)
 println("Receiver number: ", receiver_num)
-draw_model(vel_true, vel_init, receiver_coor,source_coor);
+# draw_model(vel_true, vel_init, receiver_coor,source_coor);

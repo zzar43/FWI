@@ -1,8 +1,8 @@
 # This file contains some functions needed in FWI algorithm.
 
 function make_data(vel_true,Nx,Ny,h,Nt,dt,pml_len,pml_alpha,source_coor,source_vec,receiver_coor)
-    true_wavefield = zeros(Nx,Ny,Nt,source_num);
-    received_data = zeros(receiver_num,Nt,source_num);
+    true_wavefield = SharedArray{Float64}(Nx,Ny,Nt,source_num);
+    received_data = SharedArray{Float64}(receiver_num,Nt,source_num);
     # println("Start to build the received data.")
     @sync @parallel for ind_source = 1:source_num
         true_wavefield[:,:,:,ind_source], received_data[:,:,ind_source] = wave_solver_2d_pml(vel_true,Nx,Ny,h,Nt,dt,pml_len,pml_alpha,source_coor[ind_source,:]',source_vec[ind_source,:]',receiver_coor);
@@ -16,7 +16,7 @@ end
 
 
 function source_loop(vel_init, Nx, Ny, h, Nt, dt, pml_len, pml_alpha, source_coor, source_vec, receiver_coor, received_data)
-    S = zeros(Nx,Ny,ind_source);
+    S = SharedArray{Float64}(Nx,Ny,source_num);
     # Forward and backward
     println("Source loop started. Computing sensitivity.")
     forward_wavefield, received_data_forward = make_data(vel_init,Nx,Ny,h,Nt,dt,pml_len,pml_alpha,source_coor,source_vec,receiver_coor)
@@ -57,8 +57,8 @@ end
 function line_search(c_init, S, alpha, vel_true,received_data_forward, received_data, Nx,Ny,h,Nt,dt,pml_len,pml_alpha,source_coor,source_vec,receiver_coor)
     println("Start line search")
     iter_max = 7;
-    alpha_vec = zeros(iter_max,1);
-    J = zeros(iter_max,1);
+    alpha_vec = SharedArray{Float64}(iter_max,1);
+    J = SharedArray{Float64}(iter_max,1);
     alpha_vec[iter_max] = 0;
     alpha_vec[1] = alpha;
     for i = 2:iter_max-1
@@ -70,6 +70,7 @@ function line_search(c_init, S, alpha, vel_true,received_data_forward, received_
         wavefield_new, received_data_new = make_data(vel_init-alpha*S,Nx,Ny,h,Nt,dt,pml_len,pml_alpha,source_coor,source_vec,receiver_coor);
         wavefield_new = [];
         J[i] = sum((received_data_new - received_data).^2);
+        # println("alpha = ", alpha_vec[i], " J = ", J[i])
     end
     println("Linear search result alpha: ", alpha_vec)
     println("Misfit function value: ", J)
