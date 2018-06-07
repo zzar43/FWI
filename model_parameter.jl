@@ -10,8 +10,8 @@ vel_true = 2000*ones(Nx,Ny);
 for i = 1:Nx
     vel_true[i,:] = linspace(1900,2200,Ny);
 end
-vel_true[:,40:45] = 1950;
-vel_true[:,70:end] = 2200;
+vel_true[:,50:55] = 1950;
+# vel_true[:,70:end] = 2200;
 # using ImageFiltering
 # vel_init = imfilter(vel_true, Kernel.gaussian(10));
 
@@ -64,4 +64,4 @@ pml_alpha = 300;
 # Display model
 println("Source number: ", source_num)
 println("Receiver number: ", receiver_num)
-# draw_model(vel_true, vel_init, receiver_coor,source_coor);
+draw_model(vel_true, vel_init, receiver_coor,source_coor);
