@@ -2,7 +2,7 @@
 function make_diff_operator(h,omega,vel,beta,Nx,Ny)
     coef = (1 + im*beta) .* (h^2*omega.^2) ./ (vel.^2);
     coef = coef - 4;
-    A = spzeros(Complex128, (Nx-2)*(Ny-2), (Nx-2)*(Ny-2));
+    A = spzeros(Complex64, (Nx-2)*(Ny-2), (Nx-2)*(Ny-2));
     # A = zeros((Nx-2)*(Ny-2),(Nx-2)*(Ny-2));
     # Center area
     for i = 2:Nx-3
@@ -87,9 +87,10 @@ function make_diff_operator(h,omega,vel,beta,Nx,Ny)
     return A;
 end;
 
-function AcousticHelmholtzSolver(vel,Nx,Ny,h,omega,source_vec,pml_len,pml_alpha,return_vec=true)
+function AcousticHelmholtzSolver(vel,Nx,Ny,h,fre,source_vec,pml_len,pml_alpha,return_vec=true)
     Nx_pml = Nx + 2pml_len;
     Ny_pml = Ny + 2pml_len;
+    omega = fre * 2 * pi;
     pml_value = linspace(0,pml_alpha,pml_len);
 
     # (1+i\beta)k^2 u + \Delta u = -f.
@@ -114,6 +115,8 @@ function AcousticHelmholtzSolver(vel,Nx,Ny,h,omega,source_vec,pml_len,pml_alpha,
     source = zeros(Complex64,Nx_pml-2,Ny_pml-2);
     source[pml_len:pml_len-1+Nx,pml_len:pml_len-1+Ny] = reshape(source_vec,Nx,Ny);
     source_vec = reshape(source, (Nx_pml-2)*(Ny_pml-2), 1);
+    # source_vec = -1*conj(source_vec);
+    source_vec = -1source_vec;
 
     A = make_diff_operator(h,omega,vel_ex,beta,Nx_pml,Ny_pml);
 
@@ -125,6 +128,7 @@ function AcousticHelmholtzSolver(vel,Nx,Ny,h,omega,source_vec,pml_len,pml_alpha,
     end
     return u;
 end
+
 
 function AcousticHelmholtzSolverPML(vel,Nx,Ny,omega,h,source_vec,pml_len,pml_alpha,return_vec=true)
     Nx0 = Nx + 2pml_len;

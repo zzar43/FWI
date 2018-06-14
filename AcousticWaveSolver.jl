@@ -30,14 +30,14 @@ function AcousticWaveSolver2d(vel, Nx, Ny, h, Nt, dt, source_vec, source_coor, r
     return wavefield, recorded_data;
 end
 
-function AcousticWaveSolver2d_PML(vel, Nx, Ny, h, Nt, dt, source_vec, source_coor, receiver_coor, pml_alpha, pml_len)
+function AcousticWaveSolver2d_PML(vel, Nx, Ny, h, Nt, dt, source_vec, source_coor, receiver_coor, pml_alpha, pml_len, forward=true)
     # Extend Model
-    Nx_pml = Nx + 2pml_len;
-    Ny_pml = Ny + 2pml_len;
-    source_coor_ex = source_coor + pml_len;
-    receiver_coor_ex = receiver_coor + pml_len;
+    local Nx_pml = Nx + 2pml_len;
+    local Ny_pml = Ny + 2pml_len;
+    local source_coor_ex = source_coor + pml_len;
+    local receiver_coor_ex = receiver_coor + pml_len;
     # Extend velocity
-    vel_ex = zeros(Nx_pml,Ny_pml);
+    local vel_ex = zeros(Float32,Nx_pml,Ny_pml);
     vel_ex[pml_len+1:end-pml_len,pml_len+1:end-pml_len] = vel;
     for i = 1:pml_len
         vel_ex[i,:] = vel_ex[pml_len+1,:];
@@ -46,13 +46,13 @@ function AcousticWaveSolver2d_PML(vel, Nx, Ny, h, Nt, dt, source_vec, source_coo
         vel_ex[:,end-i+1] = vel_ex[:,end-pml_len];
     end
     # Vectorization source and receiver coordinates
-    source_coor_ex_vec = source_coor_ex[:,1] + (source_coor_ex[:,2]-1)*Nx_pml;
-    receiver_coor_ex_vec = receiver_coor_ex[:,1] + (receiver_coor_ex[:,2]-1)*Nx_pml;
+    local source_coor_ex_vec = source_coor_ex[:,1] + (source_coor_ex[:,2]-1)*Nx_pml;
+    local receiver_coor_ex_vec = receiver_coor_ex[:,1] + (receiver_coor_ex[:,2]-1)*Nx_pml;
 
     # PML coefficients
-    pml_value = linspace(0,pml_alpha,pml_len);
-    sigma_x = zeros(Nx_pml,Ny_pml);
-    sigma_y = zeros(Nx_pml,Ny_pml);
+    local pml_value = linspace(0,pml_alpha,pml_len);
+    local sigma_x = zeros(Nx_pml,Ny_pml);
+    local sigma_y = zeros(Nx_pml,Ny_pml);
     for i = 1:pml_len
         sigma_x[pml_len+1-i,:] = pml_value[i];
         sigma_y[:,pml_len+1-i] = pml_value[i];
@@ -61,25 +61,25 @@ function AcousticWaveSolver2d_PML(vel, Nx, Ny, h, Nt, dt, source_vec, source_coo
     end
 
     # Coefficients
-    u0 = zeros(Nx_pml,Ny_pml);
-    u1 = zeros(Nx_pml,Ny_pml);
-    u2 = zeros(Nx_pml,Ny_pml);
-    ae_x0 = zeros(Nx_pml,Ny_pml);
-    ae_x1 = zeros(Nx_pml,Ny_pml);
-    ae_y0 = zeros(Nx_pml,Ny_pml);
-    ae_y1 = zeros(Nx_pml,Ny_pml);
-    part1 = zeros(Nx_pml,Ny_pml);
-    part2 = zeros(Nx_pml,Ny_pml);
-    part3 = zeros(Nx_pml,Ny_pml);
-    part4 = zeros(Nx_pml,Ny_pml);
-    A = dt*(sigma_x+sigma_y);
-    B = dt.^2 .* sigma_x .* sigma_y;
-    lambda1 = vel_ex.^2 * dt^2 / h^2;
-    lambda2 = vel_ex.^2 * dt^2 / (2h);
+    local u0 = zeros(Float32,Nx_pml,Ny_pml);
+    local u1 = zeros(Float32,Nx_pml,Ny_pml);
+    local u2 = zeros(Float32,Nx_pml,Ny_pml);
+    local ae_x0 = zeros(Float32,Nx_pml,Ny_pml);
+    local ae_x1 = zeros(Float32,Nx_pml,Ny_pml);
+    local ae_y0 = zeros(Float32,Nx_pml,Ny_pml);
+    local ae_y1 = zeros(Float32,Nx_pml,Ny_pml);
+    local part1 = zeros(Float32,Nx_pml,Ny_pml);
+    local part2 = zeros(Float32,Nx_pml,Ny_pml);
+    local part3 = zeros(Float32,Nx_pml,Ny_pml);
+    local part4 = zeros(Float32,Nx_pml,Ny_pml);
+    local A = dt*(sigma_x+sigma_y);
+    local B = dt.^2 .* sigma_x .* sigma_y;
+    local lambda1 = vel_ex.^2 * dt^2 / h^2;
+    local lambda2 = vel_ex.^2 * dt^2 / (2h);
 
-    receiver_num = size(receiver_coor,1);
-    recorded_data = zeros(receiver_num,Nt);
-    wavefield = zeros(Nx_pml,Ny_pml,Nt);
+    local receiver_num = size(receiver_coor,1);
+    local recorded_data = zeros(Float32,receiver_num,Nt);
+    local wavefield = zeros(Float32,Nx_pml,Ny_pml,Nt);
 
     # Time loop
     for iter_t in 1:Nt
@@ -89,7 +89,12 @@ function AcousticWaveSolver2d_PML(vel, Nx, Ny, h, Nt, dt, source_vec, source_coo
         part4[2:end-1,2:end-1] = lambda2[2:end-1,2:end-1] .* (ae_y1[2:end-1,3:end] - ae_y1[2:end-1,1:end-2]);
 
         u2 = 2u1 - u0 - A.*(u1-u0) - B.*u1 + part1 + part2 + part3 + part4;
-        u2[source_coor_ex_vec] += vel_ex[source_coor_ex_vec].^2 .* dt^2 .* (-1) .* source_vec[:,iter_t];
+        # Source point ????? += ?????
+        if forward == true
+            u2[source_coor_ex_vec] += vel_ex[source_coor_ex_vec].^2 .* dt^2 .* (-1) .* source_vec[:,iter_t];
+        else
+            u2[source_coor_ex_vec] = vel_ex[source_coor_ex_vec].^2 .* dt^2 .* (-1) .* source_vec[:,iter_t];
+        end
 
         # auxiliary equation
         ae_x1[2:end-1,2:end-1] = ae_x0[2:end-1,2:end-1] - dt.*sigma_x[2:end-1,2:end-1].*ae_x0[2:end-1,2:end-1] - dt/(2h).*(sigma_x[2:end-1,2:end-1]-sigma_y[2:end-1,2:end-1]).*(u1[3:end,2:end-1]-u1[1:end-2,2:end-1]);
