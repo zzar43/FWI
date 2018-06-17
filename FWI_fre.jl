@@ -1,27 +1,78 @@
+include("scalar_helmholtz_solver.jl")
 
+# Compute gradient by adjoint method.
+function compute_gradient(vel, recorded_data, source_multi, acq_fre)
+    Nx_pml = acq_fre.Nx_pml;
+    Ny_pml = acq_fre.Ny_pml;
+    pml_len = acq_fre.pml_len;
+    Nx = acq_fre.Nx;
+    Ny = acq_fre.Ny;
+    frequency = acq_fre.frequency;
+    omega = frequency * 2 * pi;
+    fre_num = acq_fre.fre_num;
+    source_num = acq_fre.source_num;
 
-function make_data(vel,Nx,Ny,h,frequency,source_vec,pml_len,pml_alpha,R)
-    size_source = size(source_vec);
-    fre_num = size_source[3];
-    source_num = size_source[4];
+    # Initialize
+    gradient = zeros(Float32, Nx*Ny, fre_num, source_num);
+    # Extend area
+    beta, vel_ex = extend_area(vel, acq_fre);
+    # Source term
+    # Size: Nx_pml-2 * Ny_pml-2
+    source_vec = change_source(source_multi, acq_fre);
 
-    wavefield = zeros(Complex64,Nx,Ny,fre_num,source_num);
-    recorded_vec = zeros(Complex64,Nx*Ny,1,fre_num,source_num);
+    # Main loop
+    for ind_fre = 1:fre_num
+        A = make_diff_operator(h,omega[ind_fre],vel_ex,beta,Nx_pml,Ny_pml);
+        F = lufact(A);
+        for ind_source = 1:source_num
+            source = source_vec[:,ind_fre,ind_source];
+            # Forward
+            u_forward_vec = F\source;
+            u_forward = reshape(u_forward_vec,Nx_pml-2,Ny_pml-2);
+            u_forward = u_forward[pml_len:pml_len-1+Nx,pml_len:pml_len-1+Ny];
+            # Adjoint source
+            r_forward_vec = acq_fre.projection_op * reshape(u_forward,Nx*Ny,1);
+            source_adjoint = conj(r_forward_vec - recorded_data[:,ind_fre,ind_source]);
+            source_adjoint0 = zeros(Complex64,Nx_pml-2,Ny_pml-2);
+            source_adjoint0[pml_len:pml_len-1+Nx,pml_len:pml_len-1+Ny] = reshape(source_adjoint,Nx,Ny);
+            source_adjoint = reshape(source_adjoint0, (Nx_pml-2)*(Ny_pml-2), 1);
+            source_adjoint = -source_adjoint;
+            # Backward
+            u_back_vec = F\source_adjoint;
+            u_back = reshape(u_back_vec,Nx_pml-2,Ny_pml-2);
+            u_back = u_back[pml_len:pml_len-1+Nx,pml_len:pml_len-1+Ny];
+            # Gradient
+            grad = real(-omega[ind_fre].^2 ./ (vel.^3) .* u_forward .* u_back);
+            gradient[:,ind_fre,ind_source] = reshape(grad, Nx*Ny, 1);
 
-    for ind_source = 1:source_num
-        for ind_fre = 1:fre_num
-            fre = frequency[ind_fre];
-            source = source_vec[:,:,ind_fre,ind_source];
-            u_vec = AcousticHelmholtzSolver(vel_true,Nx,Ny,h,fre,source,pml_len,pml_alpha,true);
-            u = reshape(u_vec, Nx, Ny);
-            r_vec = R * u_vec;
-            wavefield[:,:,ind_fre,ind_source] = u;
-            recorded_vec[:,:,ind_fre,ind_source] = r_vec;
-            println("Source: ",ind_source, ", frequency: ", fre, " done.")
+            println("Frequency ", frequency[ind_fre], "Hz source ", ind_source, " complete.")
         end
     end
-    return wavefield, recorded_vec
+    return gradient
 end
+
+# function make_data(vel,Nx,Ny,h,frequency,source_vec,pml_len,pml_alpha,R)
+#     size_source = size(source_vec);
+#     fre_num = size_source[3];
+#     source_num = size_source[4];
+#
+#     wavefield = zeros(Complex64,Nx,Ny,fre_num,source_num);
+#     recorded_vec = zeros(Complex64,Nx*Ny,1,fre_num,source_num);
+#
+#     for ind_source = 1:source_num
+#         for ind_fre = 1:fre_num
+#             fre = frequency[ind_fre];
+#             source = source_vec[:,:,ind_fre,ind_source];
+#             u_vec = AcousticHelmholtzSolver(vel_true,Nx,Ny,h,fre,source,pml_len,pml_alpha,true);
+#             u = reshape(u_vec, Nx, Ny);
+#             r_vec = R * u_vec;
+#             wavefield[:,:,ind_fre,ind_source] = u;
+#             recorded_vec[:,:,ind_fre,ind_source] = r_vec;
+#             println("Source: ",ind_source, ", frequency: ", fre, " done.")
+#         end
+#     end
+#     return wavefield, recorded_vec
+# end
 
 
 # function compute_gradient(recorded_true_vec,vel,Nx,Ny,h,frequency,source_vec,pml_len,pml_alpha,R)
@@ -87,35 +138,35 @@ end
 #     return gradient;
 # end
 
-function compute_gradient(recorded_true_vec,vel,Nx,Ny,h,frequency,source_vec,pml_len,pml_alpha,R)
-
-    size_source = size(source_vec);
-    fre_num = size_source[3];
-    source_num = size_source[4];
-
-    gradient = zeros(Complex64,Nx,Ny,fre_num,source_num);
-
-    for ind_source = 1:source_num
-        for ind_fre = 1:fre_num
-            source_vec0 = source_vec[:,:,ind_fre,ind_source];
-            fre = frequency[ind_fre];
-            omega = 2*pi*fre;
-            # Forward
-            u_forward_vec = AcousticHelmholtzSolver(vel,Nx,Ny,h,fre,source_vec0,pml_len,pml_alpha,true);
-            r_forward_vec = R * u_forward_vec;
-            u_forward = reshape(u_forward_vec, Nx, Ny);
-            # Backward
-            source_adjoint = -conj(recorded_true_vec[:,:,ind_fre]-r_forward_vec);
-            u_back_vec = AcousticHelmholtzSolver(vel,Nx,Ny,h,fre,source_adjoint,pml_len,pml_alpha,true);
-            u_back = reshape(u_back_vec, Nx, Ny);
-            # gradient
-            gradient[:,:,ind_fre,ind_source] = -2omega.^2 ./(vel.^3) .* u_forward .* u_back;
-            println("Source: ",ind_source, ", frequency: ", fre, " done.")
-        end
-    end
-
-    return gradient
-end
+# function compute_gradient(recorded_true_vec,vel,Nx,Ny,h,frequency,source_vec,pml_len,pml_alpha,R)
+#
+#     size_source = size(source_vec);
+#     fre_num = size_source[3];
+#     source_num = size_source[4];
+#
+#     gradient = zeros(Complex64,Nx,Ny,fre_num,source_num);
+#
+#     for ind_source = 1:source_num
+#         for ind_fre = 1:fre_num
+#             source_vec0 = source_vec[:,:,ind_fre,ind_source];
+#             fre = frequency[ind_fre];
+#             omega = 2*pi*fre;
+#             # Forward
+#             u_forward_vec = AcousticHelmholtzSolver(vel,Nx,Ny,h,fre,source_vec0,pml_len,pml_alpha,true);
+#             r_forward_vec = R * u_forward_vec;
+#             u_forward = reshape(u_forward_vec, Nx, Ny);
+#             # Backward
+#             source_adjoint = -conj(recorded_true_vec[:,:,ind_fre]-r_forward_vec);
+#             u_back_vec = AcousticHelmholtzSolver(vel,Nx,Ny,h,fre,source_adjoint,pml_len,pml_alpha,true);
+#             u_back = reshape(u_back_vec, Nx, Ny);
+#             # gradient
+#             gradient[:,:,ind_fre,ind_source] = -2omega.^2 ./(vel.^3) .* u_forward .* u_back;
+#             println("Source: ",ind_source, ", frequency: ", fre, " done.")
+#         end
+#     end
+#
+#     return gradient
+# end
 
 
 # function make_data(vel_true,Nx,Ny,fre,h,source_num,source_func,pml_len,pml_alpha,R)
