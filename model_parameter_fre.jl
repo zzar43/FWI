@@ -100,13 +100,22 @@ end
 
 # ===================================================
 # Space
-Nx = 101;
-Ny = 101;
-h = 1/100;
-vel_true = 2ones(Float32,Nx,Ny);
-vel_true[46:55,46:55] = 2.5;
-# vel_true[:,51:end] = 3;
-vel_init = 2ones(Float32,Nx,Ny);
+# Nx = 101;
+# Ny = 101;
+# h = 1/100;
+# vel_true = 2ones(Float32,Nx,Ny);
+# # vel_true[46:55,46:55] = 2.5;
+# vel_true[:,33:66] = 2.5;
+# vel_true[:,67:end] = 3;
+# vel_init = 2ones(Float32,Nx,Ny);
+
+# Read Marmousi
+using MAT;
+vars = matread("marmousi_dz10.mat");
+vel_true = vars["vel"]; vel_true = vel_true.';
+vel_true = convert(Array{Float32,2},vel_true)
+Nx, Ny = size(vel_true);
+h = 10;
 using ImageFiltering
 vel_init = imfilter(vel_true, Kernel.gaussian(15));
 
@@ -123,21 +132,25 @@ dt = 1/sample_fre;
 Nt = 1000;
 t = linspace(0,(Nt-1)*dt,Nt);
 fre = sample_fre * linspace(0,1-1/Nt,Nt);
-fre_position = 2:2:20;
+fre_position = 10:10;
 frequency = fre[fre_position];
 fre_num = length(frequency);
 println("Frequency: ", frequency)
 
 # ===================================================
 # Source
-source_num = 6;
+source_num = 1;
 source_coor = zeros(Int,source_num,2);
 for i = 1:source_num
-    source_coor[i,1] = 1 + 20*(i-1);
+    source_coor[i,1] = 500;
     source_coor[i,2] = 1;
 end
+# for i = 7:12
+#     source_coor[i,1] = 1 + 20*(i-7);
+#     source_coor[i,2] = 101;
+# end
 println("Source number: ", source_num)
-source_multi = build_source_multi(15,0.1,t,fre_position,source_num,fre_num,false);
+source_multi = build_source_multi(15,0.1,t,fre_position,source_num,fre_num,true);
 source_vec = zeros(Nx,Ny);
 source_vec[20,20] = 1;
 source_vec = reshape(source_vec,Nx*Ny,1);
