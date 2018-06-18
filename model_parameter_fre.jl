@@ -118,6 +118,9 @@ Nx, Ny = size(vel_true);
 h = 10;
 using ImageFiltering
 vel_init = imfilter(vel_true, Kernel.gaussian(15));
+matshow(vel_true')
+savefig("vel_true.png")
+
 
 # PML
 pml_len = 50;
